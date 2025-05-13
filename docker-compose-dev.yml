@@ -1,0 +1,4 @@
+services:
+  web:
+    image: !reset
+    build: ./web/

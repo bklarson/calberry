@@ -1,0 +1,28 @@
+{
+  "name": "calberry",
+  "version": "0.0.1",
+  "description": "A small touchscreen calendar-focused kiosk",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo 'Error: no test supported at this time'; false"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bklarson/calberry.git"
+  },
+  "keywords": [
+    "raspberry pi",
+    "calendar",
+    "kiosk"
+  ],
+  "author": "Brad Larson",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/bklarson/calberry/issues"
+  },
+  "homepage": "https://github.com/bklarson/calberry#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

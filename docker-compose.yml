@@ -4,3 +4,12 @@ services:
     ports:
       - "80:3000"
     restart: unless-stopped
+
+  autohelm:
+    image: bklarson/autohelm:0.0.1
+    restart: unless-stopped
+    environment:
+      - COMPOSE_URL=https://raw.githubusercontent.com/bklarson/calberry/refs/heads/prod/docker-compose.yml
+    volumes:
+      - ./docker-compose.yml:/data/docker-compose.yml
+      - /var/run/docker.sock:/var/run/docker.sock

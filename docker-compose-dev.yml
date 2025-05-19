@@ -1,4 +1,8 @@
 services:
   web:
     image: !reset
-    build: ./web/
+    build:
+      context: ./web/
+      target: dev
+    volumes:
+      - ./web:/app

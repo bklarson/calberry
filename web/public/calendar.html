@@ -29,6 +29,29 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async function () {
+      fetch('/api/calendar/sources')
+        .then(async res => {
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to fetch calendar sources: ${errorText}`);
+          }
+          return res.json();
+        })
+        .then(sources => {
+          if (!sources.length) {
+            // TODO: showHintBox();
+            return;
+          }
+
+          const eventSources = sources
+            .filter(source => source.enabled === true || source.enabled === 'true')
+            .map(source => ({
+              url: `/api/calendar/data?url=${encodeURIComponent(source.url)}`,
+              format: 'ics',
+              color: source.color
+          }));
+
+
       const calendarEl = document.getElementById('calendar');
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -38,14 +61,16 @@
           center: 'title',
           right: 'dayGridMonth,dayGridWeek'
         },
-        eventSources: [{
-          url: '/api/caldata',
-          format: 'ics'
-        }],
+        eventSources,
         height: '100%'
       });
 
       calendar.render();
+        })
+        .catch(error => {
+          console.error('Error loading calendar sources:', error);
+          // Optionally show a user-friendly error message here
+        });
     });
   </script>
 </body>

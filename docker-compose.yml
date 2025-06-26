@@ -3,6 +3,8 @@ services:
     image: bklarson/calberry-web:0.0.1
     ports:
       - "80:3000"
+    volumes:
+      - ./web/data:/app/data
     restart: unless-stopped
 
   autohelm:

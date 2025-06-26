@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/bklarson/calberry#readme",
   "dependencies": {
+    "@fullcalendar/icalendar": "^6.1.17",
     "express": "^5.1.0",
     "fullcalendar": "^6.1.17"
   },

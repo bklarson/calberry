@@ -3,6 +3,9 @@ const app = express();
 const path = require('path');
 const port = 3000;
 
+const proxyRouter = require('./proxy');
+app.use('/api', proxyRouter);
+
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 

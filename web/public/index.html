@@ -93,14 +93,33 @@
       <img src="images/settings-icon.svg" alt="Settings" width="24" height="24" style="display:block;" />
     </button>
     <div id="main">
-      <iframe id="iframe" src="calendar.html"></iframe>
+      <iframe id="iframe"></iframe>
     </div>
   </div>
 
   <script>
-    function loadPage(url) {
-      document.getElementById('iframe').src = url;
+    function loadPage(url, push = true) {
+      var iframe = document.getElementById('iframe');
+      iframe.remove();
+      iframe.src = url;
+      document.getElementById('main').appendChild(iframe);
+      document.title = `Calberry - ${url.replace('.html', '').replace(/_/g, ' ')}`;
+      if (push) {
+        history.pushState(null, '', `?page=${encodeURIComponent(url)}`);
+      }
     }
+
+    function loadPageFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get('page') || 'calendar.html';
+      loadPage(page, false);
+    }
+
+    // On popstate (back/forward/reload), update iframe
+    window.addEventListener('popstate', loadPageFromUrl);
+    // On page load, set iframe src from URL
+    window.addEventListener('load', loadPageFromUrl);
+
     function updateDateTime() {
         const now = new Date();
         const date = now.toLocaleString(undefined, {

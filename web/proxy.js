@@ -8,6 +8,44 @@ const router = express.Router();
 const CALENDAR_SOURCES_PATH = path.join(__dirname, '/data/calendar_sources.json');
 const CALENDAR_DEFAULT_SOURCES_PATH = path.join(__dirname, '/static/calendar_sources_default.json');
 
+const SETTINGS_PATH = path.join(__dirname, '/data/settings.json');
+// GET navbar title
+router.get('/settings/navbar-title', (req, res) => {
+  if (!fs.existsSync(SETTINGS_PATH)) {
+    return res.json({ navbarTitle: 'Calberry' });
+  }
+  try {
+    const data = fs.readFileSync(SETTINGS_PATH, 'utf8');
+    const json = JSON.parse(data);
+    res.json({ navbarTitle: json.navbarTitle || 'Calberry' });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to read settings' });
+  }
+});
+
+// POST navbar title
+router.post('/settings/navbar-title', express.json(), (req, res) => {
+  const { navbarTitle } = req.body;
+  if (typeof navbarTitle !== 'string') {
+    return res.status(400).json({ error: 'navbarTitle must be a string' });
+  }
+  let settings = {};
+  if (fs.existsSync(SETTINGS_PATH)) {
+    try {
+      settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
+    } catch (e) {
+      // ignore, will overwrite
+    }
+  }
+  settings.navbarTitle = navbarTitle;
+  try {
+    fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf8');
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to write settings' });
+  }
+});
+
 router.get('/calendar/sources', (req, res) => {
   if (!fs.existsSync(CALENDAR_SOURCES_PATH)) {
     // The file doesn't exist - copy over the defaults file:

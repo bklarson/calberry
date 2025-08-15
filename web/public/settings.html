@@ -130,8 +130,10 @@
                 <a href="/settings/sources.html" class="link">Sources</a>
             </div>
         </div>
+        <button id="apply-btn" style="margin:32px auto 0 auto;display:block;padding:12px 32px;font-size:1.1em;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;transition:background 0.2s;">Apply</button>
     </div>
     <script>
+        // Accordion logic
         document.querySelectorAll('.section-title').forEach(title => {
             title.addEventListener('click', function() {
                 const section = this.parentElement;
@@ -143,6 +145,32 @@
                 });
                 // Toggle the clicked section
                 section.classList.toggle('open');
+            });
+        });
+
+        // Navbar title logic
+        const navTitleInput = document.getElementById('nav-title');
+
+        // Fetch current title from backend
+        fetch('/api/settings/navbar-title')
+            .then(r => r.json())
+            .then(data => {
+                if (data.navbarTitle !== undefined) {
+                    navTitleInput.value = data.navbarTitle;
+                }
+            });
+
+        // Save title to backend on Apply button click
+        document.getElementById('apply-btn').addEventListener('click', function() {
+            fetch('/api/settings/navbar-title', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ navbarTitle: navTitleInput.value })
+            }).then(() => {
+                // Notify parent window (index.html) to update the navbar title
+                if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'navbarTitleUpdated' }, '*');
+                }
             });
         });
     </script>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #2980b9;
+            --section-bg: #fff;
+            --border: #dfe4ea;
+            --text: #222f3e;
+            --muted: #8395a7;
+        }
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            padding: 32px 24px;
+        }
+        h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 24px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .section {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 18px;
+            background: var(--section-bg);
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        .section-title {
+            background: var(--primary);
+            color: #fff;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s;
+        }
+        .section-title:hover {
+            background: var(--accent);
+        }
+        .section-title .arrow {
+            transition: transform 0.2s;
+            font-size: 1.2em;
+        }
+        .section.open .section-title .arrow {
+            transform: rotate(90deg);
+        }
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            background: var(--bg);
+            transition: max-height 0.3s cubic-bezier(.4,0,.2,1), padding 0.3s;
+            padding: 0 18px;
+        }
+        .section.open .section-content {
+            padding: 16px 18px 18px 18px;
+            max-height: 200px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 0.98em;
+        }
+        input[type="text"] {
+            width: 90%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1em;
+            background: #fff;
+            color: var(--text);
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        .link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .link:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section" id="general-section">
+            <div class="section-title">
+                General
+                <span class="arrow">&#9654;</span>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="nav-title">NavBar Title</label>
+                    <input type="text" id="nav-title" name="nav-title" placeholder="Enter navbar title">
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="calendar-section">
+            <div class="section-title">
+                Calendar
+                <span class="arrow">&#9654;</span>
+            </div>
+            <div class="section-content">
+                <a href="/settings/sources.html" class="link">Sources</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.section-title').forEach(title => {
+            title.addEventListener('click', function() {
+                const section = this.parentElement;
+                // Close all other sections
+                document.querySelectorAll('.section.open').forEach(openSection => {
+                    if (openSection !== section) {
+                        openSection.classList.remove('open');
+                    }
+                });
+                // Toggle the clicked section
+                section.classList.toggle('open');
+            });
+        });
+    </script>
+</body>
+</html>

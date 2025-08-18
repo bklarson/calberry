@@ -58,6 +58,18 @@ router.get('/calendar/sources', (req, res) => {
   const data = fs.readFileSync(CALENDAR_SOURCES_PATH, 'utf8');
   res.json(JSON.parse(data));
 });
+router.post('/calendar/sources', express.json(), (req, res) => {
+  const newList = req.body;
+  if (!Array.isArray(newList)) return res.status(400).json({ error: 'Invalid format' });
+
+  // Optionally: validate each item here
+  try {
+    fs.writeFileSync(CALENDAR_SOURCES_PATH, JSON.stringify(newList, null, 2), 'utf8');
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to write settings' });
+  }
+});
 
 router.get('/calendar/data', (req, res) => {
   const url = req.query.url;

@@ -40,7 +40,7 @@
         .then(sources => {
           if (!sources.length) {
             // TODO: showHintBox();
-            return;
+            console.warn('No calendar sources found');
           }
 
           const eventSources = sources
@@ -51,27 +51,26 @@
               color: source.color
           }));
 
+          const calendarEl = document.getElementById('calendar');
 
-      const calendarEl = document.getElementById('calendar');
+          const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+              left: 'today prev,next',
+              center: 'title',
+              right: 'dayGridMonth,dayGridWeek'
+            },
+            eventSources,
+            height: '100%'
+          });
 
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-          left: 'today prev,next',
-          center: 'title',
-          right: 'dayGridMonth,dayGridWeek'
-        },
-        eventSources,
-        height: '100%'
-      });
-
-      calendar.render();
-        })
-        .catch(error => {
-          console.error('Error loading calendar sources:', error);
-          // Optionally show a user-friendly error message here
+          calendar.render();
+            })
+            .catch(error => {
+              console.error('Error loading calendar sources:', error);
+              // Optionally show a user-friendly error message here
+            });
         });
-    });
   </script>
 </body>
 </html>

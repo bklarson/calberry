@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 1620px;
+        height: 1080px;
+        overflow: hidden;
+        font-family: sans-serif;
+    }
+</style>
+</head>
+<body>
+<!-- Load the zip code for the weather url in the iframe below from the server: -->
+<script>
+    async function loadWeatherZipCode() {
+        try {
+            const response = await fetch('/api/settings/weather');
+            if (!response.ok) {
+                throw new Error('Failed to fetch weather settings');
+            }
+            const data = await response.json();
+            return data.zipCode || '';
+        } catch (error) {
+            console.error('Error loading weather zip code:', error);
+            return '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const zipCode = await loadWeatherZipCode();
+        const iframe = document.getElementById('weatherFrame');
+        if (zipCode) {
+            iframe.src = `https://forecast.weather.gov/zipcity.php?inputstring=${zipCode}`;
+        } else {
+            iframe.src = 'https://forecast.weather.gov/zipcity.php?inputstring=00000';
+        }
+    });
+</script>
+<iframe id="weatherFrame" style="border-width:0" width="1620" height="1080" frameborder="0" scrolling="no"></iframe>
+
+</body>
+</html>

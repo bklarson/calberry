@@ -132,7 +132,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="section" id="general-section">
+        <div class="section">
             <div class="section-title">
                 General
                 <span class="arrow">&#9654;</span>
@@ -145,13 +145,26 @@
             </div>
         </div>
 
-        <div class="section" id="calendar-section">
+        <div class="section">
             <div class="section-title">
                 Calendar
                 <span class="arrow">&#9654;</span>
             </div>
             <div class="section-content">
                 <a href="#" class="link" id="calendar-sources">Sources</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                Weather
+                <span class="arrow">&#9654;</span>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="weather-zip">Zip Code</label>
+                    <input type="text" id="weather-zip" name="weather-zip" placeholder="Enter location for weather">
+                </div>
             </div>
         </div>
         <button id="apply-btn" style="margin:32px auto 0 auto;display:block;padding:12px 32px;font-size:1.1em;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;transition:background 0.2s;">Apply</button>
@@ -174,15 +187,23 @@
             });
         });
 
-        // Navbar title logic
-        const navTitleInput = document.getElementById('nav-title');
-
         // Fetch current title from backend
+        const navTitleInput = document.getElementById('nav-title');
         fetch('/api/settings/navbar-title')
             .then(r => r.json())
             .then(data => {
                 if (data.navbarTitle !== undefined) {
                     navTitleInput.value = data.navbarTitle;
+                }
+            });
+
+        // Fetch current weather zip code
+        const weatherZipInput = document.getElementById('weather-zip');
+        fetch('/api/settings/weather')
+            .then(r => r.json())
+            .then(data => {
+                if (data.zipCode !== undefined) {
+                    weatherZipInput.value = data.zipCode;
                 }
             });
 
@@ -197,6 +218,18 @@
                 if (window.parent !== window) {
                     window.parent.postMessage({ type: 'navbarTitleUpdated' }, '*');
                 }
+            });
+            fetch('/api/settings/weather', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ zipCode: weatherZipInput.value })
+            }).then(() => {
+                // Notify parent window (index.html) to update the weather iframe
+                if (window.parent !== window) {
+                    window.parent.postMessage({ type: 'weatherUpdated' }, '*');
+                }
+            }).catch(err => {
+                console.error('Error saving settings:', err);
             });
         });
 

@@ -9,6 +9,8 @@ const CALENDAR_SOURCES_PATH = path.join(__dirname, '/data/calendar_sources.json'
 const CALENDAR_DEFAULT_SOURCES_PATH = path.join(__dirname, '/static/calendar_sources_default.json');
 
 const SETTINGS_PATH = path.join(__dirname, '/data/settings.json');
+const WEATHER_PATH = path.join(__dirname, '/data/weather.json');
+
 // GET navbar title
 router.get('/settings/navbar-title', (req, res) => {
   if (!fs.existsSync(SETTINGS_PATH)) {
@@ -40,6 +42,29 @@ router.post('/settings/navbar-title', express.json(), (req, res) => {
   settings.navbarTitle = navbarTitle;
   try {
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf8');
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to write settings' });
+  }
+});
+
+// GET weather settings
+router.get('/settings/weather', (req, res) => {
+  if (!fs.existsSync(WEATHER_PATH)) {
+    return res.json({ zipCode: '' });
+  }
+  try {
+    const data = fs.readFileSync(WEATHER_PATH, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to read settings' });
+  }
+});
+// POST weather settings
+router.post('/settings/weather', express.json(), (req, res) => {
+  const weatherSettings = req.body;
+  try {
+    fs.writeFileSync(WEATHER_PATH, JSON.stringify(weatherSettings, null, 2), 'utf8');
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Failed to write settings' });

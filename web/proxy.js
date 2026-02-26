@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
+const { updateSlideshowCache, getSlideshowImages } = require('./slideshow');
 
 const router = express.Router();
 
@@ -11,62 +12,86 @@ const CALENDAR_DEFAULT_SOURCES_PATH = path.join(__dirname, '/static/calendar_sou
 const SETTINGS_PATH = path.join(__dirname, '/data/settings.json');
 const WEATHER_PATH = path.join(__dirname, '/data/weather.json');
 
-// GET navbar title
-router.get('/settings/navbar-title', (req, res) => {
-  if (!fs.existsSync(SETTINGS_PATH)) {
-    return res.json({ navbarTitle: 'Calberry' });
+// Helper functions
+function readJsonFile(filePath, defaults = {}) {
+  if (!fs.existsSync(filePath)) {
+    return defaults;
   }
   try {
-    const data = fs.readFileSync(SETTINGS_PATH, 'utf8');
-    const json = JSON.parse(data);
-    res.json({ navbarTitle: json.navbarTitle || 'Calberry' });
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (e) {
-    res.status(500).json({ error: 'Failed to read settings' });
+    return defaults;
   }
+}
+
+function writeJsonFile(filePath, data) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Create a GET/POST handler pair for a simple string setting stored in SETTINGS_PATH
+function createSettingHandler(fieldName, defaultValue = '', onUpdate = null) {
+  return {
+    get: (req, res) => {
+      const settings = readJsonFile(SETTINGS_PATH);
+      res.json({ [fieldName]: settings[fieldName] || defaultValue });
+    },
+    post: (req, res) => {
+      const value = req.body[fieldName];
+      if (typeof value !== 'string') {
+        return res.status(400).json({ error: `${fieldName} must be a string` });
+      }
+      const settings = readJsonFile(SETTINGS_PATH);
+      const oldValue = settings[fieldName] || defaultValue;
+      
+      // Bail early if value didn't change
+      if (value === oldValue) {
+        return res.json({ success: true });
+      }
+      
+      settings[fieldName] = value;
+      if (writeJsonFile(SETTINGS_PATH, settings)) {
+        if (onUpdate) {
+          onUpdate(value);
+        }
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: 'Failed to write settings' });
+      }
+    }
+  };
+}
+
+// Settings handlers using the helper
+const navbarTitleHandler = createSettingHandler('navbarTitle', 'Calberry');
+const slideshowUrlHandler = createSettingHandler('slideshowUrl', '', (newUrl) => {
+  // Update slideshow cache when URL changes
+  updateSlideshowCache(newUrl).catch(err => {
+    console.error('Failed to update slideshow cache:', err);
+  });
 });
 
-// POST navbar title
-router.post('/settings/navbar-title', express.json(), (req, res) => {
-  const { navbarTitle } = req.body;
-  if (typeof navbarTitle !== 'string') {
-    return res.status(400).json({ error: 'navbarTitle must be a string' });
-  }
-  let settings = {};
-  if (fs.existsSync(SETTINGS_PATH)) {
-    try {
-      settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
-    } catch (e) {
-      // ignore, will overwrite
-    }
-  }
-  settings.navbarTitle = navbarTitle;
-  try {
-    fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf8');
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: 'Failed to write settings' });
-  }
-});
+router.get('/settings/navbar-title', navbarTitleHandler.get);
+router.post('/settings/navbar-title', express.json(), navbarTitleHandler.post);
+
+router.get('/settings/slideshow-url', slideshowUrlHandler.get);
+router.post('/settings/slideshow-url', express.json(), slideshowUrlHandler.post);
 
 // GET weather settings
 router.get('/settings/weather', (req, res) => {
-  if (!fs.existsSync(WEATHER_PATH)) {
-    return res.json({ zipCode: '' });
-  }
-  try {
-    const data = fs.readFileSync(WEATHER_PATH, 'utf8');
-    res.json(JSON.parse(data));
-  } catch (e) {
-    res.status(500).json({ error: 'Failed to read settings' });
-  }
+  const weather = readJsonFile(WEATHER_PATH, { zipCode: '' });
+  res.json(weather);
 });
+
 // POST weather settings
 router.post('/settings/weather', express.json(), (req, res) => {
-  const weatherSettings = req.body;
-  try {
-    fs.writeFileSync(WEATHER_PATH, JSON.stringify(weatherSettings, null, 2), 'utf8');
+  if (writeJsonFile(WEATHER_PATH, req.body)) {
     res.json({ success: true });
-  } catch (e) {
+  } else {
     res.status(500).json({ error: 'Failed to write settings' });
   }
 });
@@ -80,18 +105,18 @@ router.get('/calendar/sources', (req, res) => {
       return res.status(500).send('Default calendar sources file not found');
     }
   }
-  const data = fs.readFileSync(CALENDAR_SOURCES_PATH, 'utf8');
-  res.json(JSON.parse(data));
+  const sources = readJsonFile(CALENDAR_SOURCES_PATH, []);
+  res.json(sources);
 });
-router.post('/calendar/sources', express.json(), (req, res) => {
-  const newList = req.body;
-  if (!Array.isArray(newList)) return res.status(400).json({ error: 'Invalid format' });
 
-  // Optionally: validate each item here
-  try {
-    fs.writeFileSync(CALENDAR_SOURCES_PATH, JSON.stringify(newList, null, 2), 'utf8');
+router.post('/calendar/sources', express.json(), (req, res) => {
+  if (!Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Calendar sources must be an array' });
+  }
+
+  if (writeJsonFile(CALENDAR_SOURCES_PATH, req.body)) {
     res.json({ success: true });
-  } catch (e) {
+  } else {
     res.status(500).json({ error: 'Failed to write settings' });
   }
 });
@@ -105,6 +130,17 @@ router.get('/calendar/data', (req, res) => {
     res.setHeader('Content-Type', 'text/calendar');
     icalRes.pipe(res);
   }).on('error', () => res.status(500).send('Failed'));
+});
+
+router.get('/slideshow/images', async (req, res) => {
+  try {
+    const settings = readJsonFile(SETTINGS_PATH, {});
+    const albumUrl = settings.slideshowUrl || '';
+    const images = await getSlideshowImages(albumUrl);
+    res.json(images);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to get slideshow images' });
+  }
 });
 
 module.exports = router;

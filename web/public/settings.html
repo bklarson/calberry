@@ -167,6 +167,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="section">
+            <div class="section-title">
+                Slideshow
+                <span class="arrow">&#9654;</span>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="slideshow-url">Slideshow URL (Public Google Photos album)</label>
+                    <input type="text" id="slideshow-url" name="slideshow-url" placeholder="Enter URL of public Google Photos album">
+                </div>
+            </div>
+        </div>
+
         <button id="apply-btn" style="margin:32px auto 0 auto;display:block;padding:12px 32px;font-size:1.1em;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;transition:background 0.2s;">Apply</button>
     </div>
     <div id="modal" class="modal"></div>
@@ -187,25 +201,26 @@
             });
         });
 
-        // Fetch current title from backend
-        const navTitleInput = document.getElementById('nav-title');
-        fetch('/api/settings/navbar-title')
-            .then(r => r.json())
-            .then(data => {
-                if (data.navbarTitle !== undefined) {
-                    navTitleInput.value = data.navbarTitle;
-                }
-            });
+        // Helper function to fetch and populate a setting value
+        function fetchSettingValue(endpoint, fieldName, inputId) {
+            const input = document.getElementById(inputId);
+            fetch(endpoint)
+                .then(r => r.json())
+                .then(data => {
+                    if (data[fieldName] !== undefined) {
+                        input.value = data[fieldName];
+                    }
+                });
+        }
 
-        // Fetch current weather zip code
+        // Fetch current settings from backend
+        const navTitleInput = document.getElementById('nav-title');
         const weatherZipInput = document.getElementById('weather-zip');
-        fetch('/api/settings/weather')
-            .then(r => r.json())
-            .then(data => {
-                if (data.zipCode !== undefined) {
-                    weatherZipInput.value = data.zipCode;
-                }
-            });
+        const slideshowUrlInput = document.getElementById('slideshow-url');
+
+        fetchSettingValue('/api/settings/navbar-title', 'navbarTitle', 'nav-title');
+        fetchSettingValue('/api/settings/weather', 'zipCode', 'weather-zip');
+        fetchSettingValue('/api/settings/slideshow-url', 'slideshowUrl', 'slideshow-url');
 
         // Save title to backend on Apply button click
         document.getElementById('apply-btn').addEventListener('click', function() {
@@ -228,6 +243,11 @@
                 if (window.parent !== window) {
                     window.parent.postMessage({ type: 'weatherUpdated' }, '*');
                 }
+            });
+            fetch('/api/settings/slideshow-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slideshowUrl: slideshowUrlInput.value })
             }).catch(err => {
                 console.error('Error saving settings:', err);
             });

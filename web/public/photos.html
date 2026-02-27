@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        font-family: sans-serif;
+        background-color: black;
+    }
+    #slideshow-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    .slideshow-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 1;
+        transition: opacity 1.5s ease-in-out;
+    }
+    .slideshow-img.fade-out {
+        opacity: 0;
+    }
+</style>
+</head>
+<body>
+<script>
+    async function loadSlideshowUrls() {
+        try {
+            const resp = await fetch('/api/slideshow/images');
+            if (!resp.ok) throw new Error('Failed to fetch slideshow images');
+            const data = await resp.json();
+            return data.urls || [];
+        } catch (e) {
+            console.error('Slideshow load error', e);
+            return [];
+        }
+    }
+
+    async function preventSleep() {
+        try {
+            const wakeLock = await navigator.wakeLock.request('screen');
+        } catch (e) {
+            console.error('Failed to request wake lock:', e);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Prevent sleep/timeout
+        preventSleep();
+        
+        const urls = await loadSlideshowUrls();
+        const imgFront = document.getElementById('slideshow-front');
+        const imgBack = document.getElementById('slideshow-back');
+        let lastUrlIdx = -1;
+        
+        function getRandomUrlIdx() {
+            let idx;
+            do {
+                idx = Math.floor(Math.random() * urls.length);
+            } while (idx === lastUrlIdx && urls.length > 1);
+            return idx;
+        }
+        
+        if (urls.length) {
+            // Load initial random image
+            lastUrlIdx = getRandomUrlIdx();
+            imgFront.src = urls[lastUrlIdx] + '=w1920';
+            
+            setInterval(() => {
+                // Pick random URL that's not the current one
+                const nextIdx = getRandomUrlIdx();
+                // Load next image in back element
+                imgBack.src = urls[nextIdx] + '=w1920';
+                imgBack.classList.remove('fade-out');
+                imgFront.classList.add('fade-out');
+                // After transition, swap front and back
+                setTimeout(() => {
+                    imgFront.src = urls[nextIdx] + '=w1920';
+                    imgFront.classList.remove('fade-out');
+                    lastUrlIdx = nextIdx;
+                }, 1500);
+            }, 20000);
+        }
+    });
+</script>
+
+<div id="slideshow-container">
+    <img id="slideshow-back" class="slideshow-img fade-out" src="" referrerpolicy="no-referrer" alt="Slideshow Back">
+    <img id="slideshow-front" class="slideshow-img" src="" referrerpolicy="no-referrer" alt="Slideshow Front">
+</div>
+
+
+<div id="datetime" style="position:absolute;bottom:10px;left:10px;color:#fff;font-size:3.2rem;z-index:1000;
+    text-shadow: 0 0 5px rgba(0,0,0,0.7);">
+</div>
+
+<script>
+    function updateDateTime() {
+        const now = new Date();
+        // format date and time separately to avoid locale-specific conjunctions
+        const dateOptions = { month: 'short', day: 'numeric' };
+        const timeOptions = { hour: 'numeric', minute: '2-digit' };
+        const datePart = now.toLocaleDateString(undefined, dateOptions);
+        const timePart = now.toLocaleTimeString(undefined, timeOptions);
+        const formatted = `${timePart}<br/>${datePart}`;
+        document.getElementById('datetime').innerHTML = formatted;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+</script>
+
+</body>
+</html>

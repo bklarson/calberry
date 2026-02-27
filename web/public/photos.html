@@ -33,6 +33,13 @@
 </head>
 <body>
 <script>
+    // Navigate back on any user interaction
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'click'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        window.history.back();
+      }, { once: true });
+    });
+
     async function loadSlideshowUrls() {
         try {
             const resp = await fetch('/api/slideshow/images');
@@ -100,14 +107,14 @@
 
 
 <div id="datetime" style="position:absolute;bottom:10px;left:10px;color:#fff;font-size:3.2rem;z-index:1000;
-    text-shadow: 0 0 5px rgba(0,0,0,0.7);">
+    text-shadow: 0 0 5px rgba(0,0,0,0.9);;">
 </div>
 
 <script>
     function updateDateTime() {
         const now = new Date();
         // format date and time separately to avoid locale-specific conjunctions
-        const dateOptions = { month: 'short', day: 'numeric' };
+        const dateOptions = { weekday: 'short', month: 'short', day: 'numeric' };
         const timeOptions = { hour: 'numeric', minute: '2-digit' };
         const datePart = now.toLocaleDateString(undefined, dateOptions);
         const timePart = now.toLocaleTimeString(undefined, timeOptions);
